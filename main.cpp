@@ -101,6 +101,9 @@ char matrixKeypadIndexToCharArray[] = {
 */
 matrixKeypadState_t matrixKeypadState;
 matrixKeypadState_t estadoAnterior;
+char *matrixKeypadStateString[] = {"MATRIX_KEYPAD_SCANNING",
+    "MATRIX_KEYPAD_DEBOUNCE",
+    "MATRIX_KEYPAD_KEY_HOLD_PRESSED"};
 
 int eventsIndex            = 0;
 systemEvent_t arrayOfStoredEvents[EVENT_MAX_STORAGE];
@@ -566,6 +569,7 @@ void matrixKeypadInit()
     * MATRIX_KEYPAD_DEBOUNCE.
     */
     matrixKeypadState = MATRIX_KEYPAD_SCANNING;
+    estadoAnterior = MATRIX_KEYPAD_SCANNING;
     int pinIndex = 0;
     /**
     * Los pines correspondientes a las columnas del teclado son pines de entrada.
@@ -610,7 +614,6 @@ char    matrixKeypadScan()
 char matrixKeypadUpdate()
 {
     char str[100];
-    char mensaje[100];
     int stringLength;
     char keyDetected = '\0';
     char keyReleased = '\0';
@@ -633,7 +636,6 @@ char matrixKeypadUpdate()
             matrixKeypadLastKeyPressed = keyDetected;
             accumulatedDebounceMatrixKeypadTime = 0;
             matrixKeypadState = MATRIX_KEYPAD_DEBOUNCE;
-            sprintf(mensaje , "MATRIX_KEYPAD_DEBOUNCE\r\n");
         }
         break;
 
@@ -662,7 +664,7 @@ char matrixKeypadUpdate()
                 keyReleased = matrixKeypadLastKeyPressed;
             }
             matrixKeypadState = MATRIX_KEYPAD_SCANNING;
-            sprintf(mensaje , "MATRIX_KEYPAD_SCANNING\r\n");
+            
         }
         break;
 
@@ -670,19 +672,18 @@ char matrixKeypadUpdate()
         matrixKeypadInit();
         break;
     }
-    if(estadoAnterior != matrixKeypadState){
-        sprintf ( str, "%s\r\n", mensaje);
-        stringLength = strlen(str);
-        uartUsb.write( str, stringLength );
-        estadoAnterior = matrixKeypadState;
-    }
-
     return keyReleased;
 }
 
 void debug()
 {
-    if (estadoAnterior != matrixKeypadState) {
-    swt
+    char mensaje[100];
+    if(estadoAnterior != matrixKeypadState){
+        sprintf(mensaje , "Se pasó del estado %s al estado %s", matrixKeypadStateString[estadoAnterior]
+                                                                    matrixKeypadStateString[matrixKeypadState]);
+        sprintf ( str, "%s\r\n", mensaje);
+        stringLength = strlen(str);
+        uartUsb.write( str, stringLength );
+        estadoAnterior = matrixKeypadState;
     }
 }
