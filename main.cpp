@@ -91,6 +91,8 @@ char matrixKeypadIndexToCharArray[] = {
     '7', '8', '9', 'C',
     '*', '0', '#', 'D',
 };
+int row = 0;
+int col = 0;
 
 /**
 * La variable matrixKeypaddState del tipo matrixKeypadState_t será la que
@@ -101,7 +103,7 @@ char matrixKeypadIndexToCharArray[] = {
 */
 matrixKeypadState_t matrixKeypadState;
 matrixKeypadState_t estadoAnterior;
-char *matrixKeypadStateString[] = {"MATRIX_KEYPAD_SCANNING",
+char matrixKeypadStateString[3][40] = {"MATRIX_KEYPAD_SCANNING",
     "MATRIX_KEYPAD_DEBOUNCE",
     "MATRIX_KEYPAD_KEY_HOLD_PRESSED"};
 
@@ -584,8 +586,6 @@ void matrixKeypadInit()
 char    matrixKeypadScan()
 {   char str[100];
     int stringLength;
-    int row = 0;
-    int col = 0;
     int i = 0;
 
     for( row=0; row<KEYPAD_NUMBER_OF_ROWS; row++ ) {
@@ -598,12 +598,6 @@ char    matrixKeypadScan()
 
         for( col=0; col<KEYPAD_NUMBER_OF_COLS; col++ ) {
             if( keypadColPins[col] == OFF ) {
-                if(estadoAnterior != matrixKeypadState){
-                    sprintf ( str, "Se leyo la columna %d y la fila %d\r\nCorresponde a la tecla %c\r\n",
-                        col,row,matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col]);
-                    stringLength = strlen(str);
-                    uartUsb.write( str, stringLength );
-                }
                 return matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col];
             }
         }
@@ -630,7 +624,6 @@ char matrixKeypadUpdate()
     switch( matrixKeypadState ) {
 
     case MATRIX_KEYPAD_SCANNING:
-        //sprintf(mensaje , "MATRIX_KEYPAD_SCANNING\r\n");
         keyDetected = matrixKeypadScan();
         if( keyDetected != '\0' ) {
             matrixKeypadLastKeyPressed = keyDetected;
@@ -640,16 +633,13 @@ char matrixKeypadUpdate()
         break;
 
     case MATRIX_KEYPAD_DEBOUNCE:
-        //sprintf(mensaje , "MATRIX_KEYPAD_DEBOUNCE\r\n");
         if( accumulatedDebounceMatrixKeypadTime >=
             DEBOUNCE_KEY_TIME_MS ) {
             keyDetected = matrixKeypadScan();
             if( keyDetected == matrixKeypadLastKeyPressed ) {
                 matrixKeypadState = MATRIX_KEYPAD_KEY_HOLD_PRESSED;
-                sprintf(mensaje , "MATRIX_KEYPAD_KEY_HOLD_PRESSED\r\n");
             } else {
                 matrixKeypadState = MATRIX_KEYPAD_SCANNING;
-                sprintf(mensaje , "MATRIX_KEYPAD_SCANNING\r\n");
             }
         }
         accumulatedDebounceMatrixKeypadTime =
@@ -657,7 +647,6 @@ char matrixKeypadUpdate()
         break;
 
     case MATRIX_KEYPAD_KEY_HOLD_PRESSED:
-        //sprintf(mensaje , "MATRIX_KEYPAD_KEY_HOLD_PRESSED\r\n");
         keyDetected = matrixKeypadScan();
         if( keyDetected != matrixKeypadLastKeyPressed ) {
             if( keyDetected == '\0' ) {
@@ -678,12 +667,25 @@ char matrixKeypadUpdate()
 void debug()
 {
     char mensaje[100];
+    char str[100];
+    int stringLength;
+    
     if(estadoAnterior != matrixKeypadState){
-        sprintf(mensaje , "Se pasó del estado %s al estado %s", matrixKeypadStateString[estadoAnterior]
+        sprintf(mensaje , "Se pasó del estado %s al estado %s", matrixKeypadStateString[estadoAnterior],
                                                                     matrixKeypadStateString[matrixKeypadState]);
         sprintf ( str, "%s\r\n", mensaje);
         stringLength = strlen(str);
         uartUsb.write( str, stringLength );
         estadoAnterior = matrixKeypadState;
+        if(estadoAnterior == MATRIX_KEYPAD_DEBOUNCE){
+            sprintf ( str, "Se leyo la columna %d y la fila %d\r\nCorresponde a la tecla %c\r\n",
+                        col,row,matrixKeypadIndexToCharArray[row*KEYPAD_NUMBER_OF_ROWS + col]);
+            stringLength = strlen(str);
+            uartUsb.write( str, stringLength );
+        }
+    }
+
+    if(estadoAnterior != matrixKeypadState){
+    
     }
 }
